@@ -1,0 +1,3 @@
+[submodule "snudown"]
+	path = snudown
+	url = https://github.com/reddit/snudown.git
