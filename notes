@@ -1,0 +1,3 @@
+snudown.convert("a<<<<<<<<<<<aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\n>asdasdas\n\nnaaaaaaaaa<<<<<<<<< <<<<<<<<<<") seems problematic (the space specifically)
+
+running snudown.convert("a<<<<<<<<<<<aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\n>asdasdas\n\nnaaaaaaaaa<<<<<<<<<<<<<<<<<") twice breaks (but works fine if initsnudown is put into convert function)
