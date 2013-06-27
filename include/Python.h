@@ -68,24 +68,20 @@ static void PyModule_AddStringConstant(PyObject *o, char *name, char *value) {
   o->keyval_length++;
 }
 
+// TODO: don't use globals, but fine for now because single threaded
+static struct buf *instring;
+static struct buf *outstring;
+
 // Ideally would check valid fmt string at compile time, for now just assume s#
 // http://stackoverflow.com/questions/11632219/c-preprocessor-macro-specialisation-based-on-an-argument
 static PyObject *Py_BuildValue(const char *fmt, const char *str, int size) {
   if (strcmp("s#", fmt) != 0) { exit(1); }
+
+  bufput(outstring, str, size);
+
   PyObject *obj = malloc(sizeof(PyObject));
-  obj->keyval_length = 0;
-  char result[size+1];
-  for (int i = 0; i < size; i++) {
-    result[i] = str[i];
-  }
-  result[size] = '\0';
-  PyModule_AddStringConstant(obj, "result", result);
   return obj;
 }
-
-// TODO: don't use globals, but fine for now because single threaded
-static struct buf *instring;
-static struct buf *outstring;
 
 static int PyArg_ParseTupleAndKeywords(PyObject *args, PyObject *kwargs, char *fmt, char *kwlist[], uint8_t **data, size_t *size, int *nofollow, char **target, char **toc_id_prefix, int *renderer, int *enable_toc) {
   *data = instring->data;
@@ -108,17 +104,14 @@ int main(void) {
 }
 
 const char *convert(char *text) {
-  bufreset(instring);
-  bufreset(outstring);
+  instring->size = 0;
+  outstring->size = 0;
   bufputs(instring, text);
   PyObject self;
   PyObject args;
   PyObject kwargs;
+
   PyObject *res = snudown_md(&self, &args, &kwargs);
-
-  bufputs(outstring, bufcstr(res->keyvals[0].value.str_v));
-
-  bufrelease(res->keyvals[0].value.str_v);
   free(res);
 
   return bufcstr(outstring);
