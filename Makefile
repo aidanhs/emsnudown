@@ -21,6 +21,6 @@ build/$(PREFIX).opt.js build/$(PREFIX).opt.html: $(FILES)
 	$(EMCC) $(FILES) $(INC) $(EMFLAGS) $(OPTFLAGS) -o $@
 
 # I don't think I should have to touch the file to make this work
-snudown/snudown.c: include/Python.h
+snudown/snudown.c: include/Python.h js/*.js
 	touch snudown/snudown.c
 
