@@ -65,6 +65,9 @@ typedef struct h_dict PyObject;
 // module properties in, but we only do things with it when forced to.
 static PyObject emscript_module = { .keyval_length = 0 };
 
+// Just so we don't malloc/free a python object on every call to buildvalue.
+static PyObject outobj;
+
 // TODO: don't use globals, but fine for now because single threaded
 static struct buf *instring;
 static struct buf *outstring;
@@ -108,11 +111,8 @@ static void PyModule_AddStringConstant(PyObject *o, char *name, char *value) {
 // http://stackoverflow.com/questions/11632219/c-preprocessor-macro-specialisation-based-on-an-argument
 static PyObject *Py_BuildValue(const char *fmt, const char *str, int size) {
   if (strcmp("s#", fmt) != 0) { exit(1); }
-
   bufput(outstring, str, size);
-
-  PyObject *obj = malloc(sizeof(PyObject));
-  return obj;
+  return &outobj;
 }
 
 // Get all the arguments from the python (kw)args object. For now, just leave
@@ -152,8 +152,7 @@ const char *convert(char *text) {
   PyObject args;
   PyObject kwargs;
 
-  PyObject *res = snudown_md(&self, &args, &kwargs);
-  free(res);
+  snudown_md(&self, &args, &kwargs);
 
   return bufcstr(outstring);
 }
