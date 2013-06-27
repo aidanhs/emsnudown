@@ -43,3 +43,15 @@ You should be able to try these files out in node.
 
 `*.html` files are a wrapper around the `*.js` files, provided by Emscripten.
 Only useful if you want to play around immediately with a build.
+
+Plans
+-----
+
+Tests.
+ - Need to compare against Snudown - use Snudown tests initially.
+ - Would be interesting to compare against [SnuOwnd](https://github.com/gamefreak/snuownd).
+ - A fuzzer would be cool.
+ - Use [comment archives](http://www.reddit.com/r/redditdev/comments/1h1wqu/anonymous_ftp_access_for_reddit_comment_data_is/) as input?
+
+Benchmarking. In particular vs SnuOwnd. Again, use comment archives for real
+world testing?
