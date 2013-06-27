@@ -5,8 +5,11 @@
 
 typedef void *PyCFunction;
 
-// Lift some defs from official Python.h
-// TODO: export function(s) listed in PyMethodDef automatically
+/*
+ * ============
+ * Lift some defs from official Python.h
+ * ============
+ */
 #define PyDoc_STRVAR(name,str) static char name[] = str
 #define METH_VARARGS  0x0001
 #define METH_KEYWORDS 0x0002
@@ -19,12 +22,16 @@ struct PyMethodDef {
 };
 typedef struct PyMethodDef PyMethodDef;
 
-// TODO: print type as well
-#define PyErr_SetString(type,str) printf(str)
-
+/*
+ * ============
+ * Shims for Python.h types
+ * ============
+ */
 // TODO: need to call this on initialisation of emscript automatically
 typedef void PyMODINIT_FUNC;
 
+// The below 'dict' is implemented as a (fixed size) list of 2-ary tuples where
+// each tuple contains a name (string) and a value (int or string in a buffer).
 // TODO: pure js implementation, this is just a js object
 // TODO: don't statically size arrays...though if moving to js object
 //       it possibly doesn't matter
@@ -49,11 +56,37 @@ struct h_dict {
 };
 typedef struct h_dict PyObject;
 
-// TODO: shouldn't really have one global, but speed?
+/*
+ * ============
+ * Global variables used for efficiency and making shims simpler
+ * ============
+ */
+// This is an equivalent of the (singleton?) module object Python stores all
+// module properties in, but we only do things with it when forced to.
 static PyObject emscript_module = { .keyval_length = 0 };
+
+// TODO: don't use globals, but fine for now because single threaded
+static struct buf *instring;
+static struct buf *outstring;
+
+/*
+ * ============
+ * Shims around Python.h methods
+ * ============
+ */
+// This represents the initialisation of the snudown module. Since we're
+// shimming most things there's very little point properly initialising all
+// the metadata.
+// TODO: export function(s) listed in PyMethodDef automatically
 static PyObject *Py_InitModule3(char *name, PyMethodDef *methods, char *doc) {
   return &emscript_module;
 }
+
+// TODO: print type as well
+#define PyErr_SetString(type,str) printf(str)
+
+// The following two methods actually do add items to the module object as
+// some information stored is actually important (specifically, renderers).
 static void PyModule_AddIntConstant(PyObject *o, char *name, int value) {
   strcpy(o->keyvals[o->keyval_length].name, name);
   o->keyvals[o->keyval_length].value.int_v = value;
@@ -68,11 +101,10 @@ static void PyModule_AddStringConstant(PyObject *o, char *name, char *value) {
   o->keyval_length++;
 }
 
-// TODO: don't use globals, but fine for now because single threaded
-static struct buf *instring;
-static struct buf *outstring;
-
-// Ideally would check valid fmt string at compile time, for now just assume s#
+// BuildValue should create a python object. In snudown it's only used to build
+// the string to return. We can skip all that by just putting it in our global
+// variable and return it from there.
+// TODO: check valid fmt string at compile time, for now just assume s#
 // http://stackoverflow.com/questions/11632219/c-preprocessor-macro-specialisation-based-on-an-argument
 static PyObject *Py_BuildValue(const char *fmt, const char *str, int size) {
   if (strcmp("s#", fmt) != 0) { exit(1); }
@@ -83,12 +115,21 @@ static PyObject *Py_BuildValue(const char *fmt, const char *str, int size) {
   return obj;
 }
 
+// Get all the arguments from the python (kw)args object. For now, just leave
+// options as default so we just render the actual text, no fussing.
+// TODO: actually might need different arguments, but we definitely don't want
+// to do it properly. Maybe a global struct to hold the arguments?
 static int PyArg_ParseTupleAndKeywords(PyObject *args, PyObject *kwargs, char *fmt, char *kwlist[], uint8_t **data, size_t *size, int *nofollow, char **target, char **toc_id_prefix, int *renderer, int *enable_toc) {
   *data = instring->data;
   *size = instring->size;
   return 1;
 }
 
+/*
+ * ============
+ * Custom functions, including the actual wrappers
+ * ============
+ */
 // Functions needed for exports
 
 void initsnudown(void);
