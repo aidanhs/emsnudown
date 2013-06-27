@@ -9,6 +9,7 @@
 
   // The below doesn't work closure compiled, see emscripten issue 704
   //root.Module.run();
+  //root.Module.callMain();
   //return root.Module.cwrap('sdify', 'string', ['string']);
 
 })();
