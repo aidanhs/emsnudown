@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "buffer.h"
 
 typedef void *PyCFunction;
 
@@ -39,7 +40,7 @@ struct h_tuple {
 
   union {
     int int_v;
-    char str_v[STR_SIZE];
+    struct buf *str_v;
   } value;
 };
 struct h_dict {
@@ -61,7 +62,8 @@ static void PyModule_AddIntConstant(PyObject *o, char *name, int value) {
 }
 static void PyModule_AddStringConstant(PyObject *o, char *name, char *value) {
   strcpy(o->keyvals[o->keyval_length].name, name);
-  strcpy(o->keyvals[o->keyval_length].value.str_v, value);
+  o->keyvals[o->keyval_length].value.str_v = bufnew(strlen(value));
+  bufputs(o->keyvals[o->keyval_length].value.str_v, value);
   o->keyvals[o->keyval_length].type = STR;
   o->keyval_length++;
 }
@@ -81,11 +83,13 @@ static PyObject *Py_BuildValue(const char *fmt, const char *str, int size) {
   return obj;
 }
 
-static char astring[256];
+// TODO: don't use globals, but fine for now because single threaded
+static struct buf *instring;
+static struct buf *outstring;
 
 static int PyArg_ParseTupleAndKeywords(PyObject *args, PyObject *kwargs, char *fmt, char *kwlist[], uint8_t **data, size_t *size, int *nofollow, char **target, char **toc_id_prefix, int *renderer, int *enable_toc) {
-  *data = astring;
-  *size = strlen(astring);
+  *data = instring->data;
+  *size = instring->size;
   return 1;
 }
 
@@ -97,21 +101,27 @@ static PyObject *snudown_md(PyObject *self, PyObject *args, PyObject *kwargs);
 // EXPORTS
 
 int main(void) {
+  instring = bufnew(128);
+  outstring = bufnew(128);
   initsnudown();
   return 0;
 }
 
-char *convert(char *text) {
-  strcpy(astring, text);
+const char *convert(char *text) {
+  bufreset(instring);
+  bufreset(outstring);
+  bufputs(instring, text);
   PyObject self;
   PyObject args;
   PyObject kwargs;
   PyObject *res = snudown_md(&self, &args, &kwargs);
-  // TODO: free result
-  char *res_str = malloc(sizeof(char) * (strlen(res->keyvals[0].value.str_v) + 1));
-  strcpy(res_str, res->keyvals[0].value.str_v);
+
+  bufputs(outstring, bufcstr(res->keyvals[0].value.str_v));
+
+  bufrelease(res->keyvals[0].value.str_v);
   free(res);
-  return res_str;
+
+  return bufcstr(outstring);
 }
 
 
