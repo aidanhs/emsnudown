@@ -3,6 +3,7 @@
   root.emscript();
   // TODO: call this lazily - won't use markdown on every page
   root['Module']['run']();
+  root['Module']['callMain']();
   root['convert'] = root['Module']['cwrap']('convert', 'string', ['string']);
   return root;
 

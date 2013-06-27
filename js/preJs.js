@@ -2,7 +2,7 @@ this['snudown'] = (function () {
 
   var root = {
     emscript: function () {
-      this.Module = {
+      var Module = {
         'noInitialRun': true,
         'noExitRuntime': true,
         'preRun': [],
