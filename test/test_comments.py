@@ -48,8 +48,16 @@ with open(filename) as f:
         ], stdin=PIPE, stdout=PIPE, stderr=PIPE)
     emsnudown_out, err = emsnudown.communicate(body_utf8)
     emsnudown_out = emsnudown_out[:-1] # Get rid of trailing newline
+    snuownd = Popen([
+        "node", "-p",
+        "require('./snuownd/snuownd.js').getParser().render(" +
+          "require('fs').readFileSync('/dev/stdin').toString()" +
+        ");"
+        ], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    snuownd_out, err = snuownd.communicate(body_utf8)
+    snuownd_out = snuownd_out[:-1] # Get rid of trailing newline
     try:
-      assert snudown_out == emsnudown_out
+      assert snudown_out == emsnudown_out == snuownd_out
       success += 1
     except:
       print "============"
@@ -59,6 +67,8 @@ with open(filename) as f:
       print snudown_out
       print "=== EMSNUDOWN:"
       print emsnudown_out
+      print "=== SNUOWND:"
+      print snuownd_out
       print "============"
       fail += 1
 
