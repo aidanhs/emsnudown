@@ -108,10 +108,74 @@ def comments_test():
         fail += 1
         #break
 
+# ============
+# Benchmarking
+# ============
+import timeit
+def benchmark_test():
+  print "BENCHMARK"
+  max_num = 10000000
+  filename = "commentdata/2013-06-27_HOUR-21"
+  num_lines = sum(1 for line in open(filename))
+  if num_lines < max_num: max_num = num_lines
+  cases = []
+
+  print "PREPARING"
+  with open(filename) as f:
+    for i, line in enumerate(f.readlines()):
+      if (i > max_num): break
+      cases.append(_force_utf8(json.loads(line)["body"]))
+
+  def bench_snuownd(cases_json):
+    snuownd = Popen([
+      "node", "-e",
+      """
+      var md = require('./snuownd/snuownd.js').getParser();
+      var cases = JSON.parse(require('fs').readFileSync('/dev/stdin').toString());
+      for (var i = 0, l = cases.length; i++; i < l) {
+        md.render(cases[i]);
+      }
+      """
+    ], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    snuownd.communicate(cases_json)
+
+  def bench_emsnudown(cases_json):
+    emsnudown = Popen([
+      "node", "-e",
+      """
+      var md = require('../build/emsnudown.opt.js');
+      var cases = JSON.parse(require('fs').readFileSync('/dev/stdin').toString());
+      for (var i = 0, l = cases.length; i++; i < l) {
+        md.convert(cases[i]);
+      }
+      """
+    ], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    emsnudown.communicate(cases_json)
+
+  print "RUNNING"
+  print "Testing initialisation speed"
+  print "SnuOwnd ",
+  print timeit.timeit(lambda: bench_snuownd(json.dumps([])), number=100)
+  print "EmSnudown ",
+  print timeit.timeit(lambda: bench_emsnudown(json.dumps([])), number=100)
+  print "Testing medium number of renders"
+  print "SnuOwnd ",
+  print timeit.timeit(lambda: bench_snuownd(json.dumps(cases[:600])), number=70)
+  print "EmSnudown ",
+  print timeit.timeit(lambda: bench_emsnudown(json.dumps(cases[:600])), number=70)
+  print "Testing large number of renders"
+  print "SnuOwnd ",
+  print timeit.timeit(lambda: bench_snuownd(json.dumps(cases[:30000])), number=20)
+  print "EmSnudown ",
+  print timeit.timeit(lambda: bench_emsnudown(json.dumps(cases[:30000])), number=20)
+  pass
+
+
 if __name__ == '__main__':
   options = {
     "sanity": sanity_test,
-    "comments": comments_test
+    "comments": comments_test,
+    "benchmark": benchmark_test
   }
   if sys.argv[1] in options:
     options[sys.argv[1]]()
