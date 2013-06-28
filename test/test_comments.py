@@ -67,44 +67,53 @@ def test_equal(body_utf8):
 # ============
 # Sanity tests
 # ============
-print "SANITY"
-fail = 0
-success = 0
-sys.path.append("../snudown")
-import test_snudown
-for key in test_snudown.cases:
-  equal, result = test_equal(key)
-  if equal:
-    assert result == test_snudown.cases[key]
-    success += 1
-  else:
-    fail += 1
+def sanity_test():
+  print "SANITY"
+  fail = 0
+  success = 0
+  sys.path.append("../snudown")
+  import test_snudown
+  for key in test_snudown.cases:
+    equal, result = test_equal(key)
+    if equal:
+      assert result == test_snudown.cases[key]
+      success += 1
+    else:
+      fail += 1
 
-print "FAIL: " + str(fail)
-print "SUCCESS: " + str(success)
-if fail > 0:
-  print "FAILED SANITY TESTS"
-  #exit(1)
+  print "FAIL: " + str(fail)
+  print "SUCCESS: " + str(success)
+  if fail > 0:
+    print "FAILED SANITY TESTS"
 
 # ============
 # Test a real set of comments
 # ============
-print "COMMENTS"
-fail = 0
-success = 0
-#skip = 3300
-skip = 0
-filename = "commentdata/2013-06-27_HOUR-21"
-num_lines = sum(1 for line in open(filename))
-with open(filename) as f:
-  for i, line in enumerate(f.readlines()):
-    if (i < skip): continue
-    print "PROCESSING COMMENT " + str(i) + " OF " + str(num_lines)
-    body_utf8 = _force_utf8(json.loads(line)["body"])
-    equal, result = check_equal(body_utf8)
-    if equal:
-      success += 1
-    else:
-      fail += 1
-      #break
+def comments_test():
+  print "COMMENTS"
+  fail = 0
+  success = 0
+  skip = 0
+  filename = "commentdata/2013-06-27_HOUR-21"
+  num_lines = sum(1 for line in open(filename))
+  with open(filename) as f:
+    for i, line in enumerate(f.readlines()):
+      if (i < skip): continue
+      print "PROCESSING COMMENT " + str(i) + " OF " + str(num_lines)
+      body_utf8 = _force_utf8(json.loads(line)["body"])
+      equal, result = check_equal(body_utf8)
+      if equal:
+        success += 1
+      else:
+        fail += 1
+        #break
 
+if __name__ == '__main__':
+  options = {
+    "sanity": sanity_test,
+    "comments": comments_test
+  }
+  if sys.argv[1] in options:
+    options[sys.argv[1]]()
+  else
+    print "Operation not recognised"
