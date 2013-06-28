@@ -84,7 +84,7 @@ print "FAIL: " + str(fail)
 print "SUCCESS: " + str(success)
 if fail > 0:
   print "FAILED SANITY TESTS"
-  exit(1)
+  #exit(1)
 
 # ============
 # Test a real set of comments
@@ -106,4 +106,5 @@ with open(filename) as f:
       success += 1
     else:
       fail += 1
+      #break
 
