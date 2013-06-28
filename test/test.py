@@ -143,7 +143,7 @@ def benchmark_test():
     emsnudown = Popen([
       "node", "-e",
       """
-      var md = require('../build/emsnudown.opt.js');
+      var md = require('../build/emsd.opt.js');
       var cases = JSON.parse(require('fs').readFileSync('/dev/stdin').toString());
       for (var i = 0, l = cases.length; i++; i < l) {
         md.convert(cases[i]);
