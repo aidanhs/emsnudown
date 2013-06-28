@@ -34,7 +34,7 @@ def check_equal(body_utf8):
     snudown_out = snudown.markdown(body_utf8)
     emsnudown = Popen([
         "node", "-p",
-        "require('../build/emsd.opt.js').snudown.convert(" +
+        "require('../build/emsd.opt.js').snudown.render(" +
           "require('fs').readFileSync('/dev/stdin').toString()" +
         ");"
         ], stdin=PIPE, stdout=PIPE, stderr=PIPE)

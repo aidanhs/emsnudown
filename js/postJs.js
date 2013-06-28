@@ -4,7 +4,7 @@
   // TODO: call this lazily - won't use markdown on every page
   root['Module']['run']();
   root['Module']['callMain']();
-  root['convert'] = root['Module']['cwrap']('convert', 'string', ['string']);
+  root['render'] = root['Module']['cwrap']('render', 'string', ['string']);
   return root;
 
   // The below doesn't work closure compiled, see emscripten issue 704

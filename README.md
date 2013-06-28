@@ -23,7 +23,7 @@ Open your browser and visit `build/emsd.opt.html` in your browser.
 
 You can now play around by entering
 ```
-snudown.convert("> Some\n\n[markdown](http://www.example.com)");
+snudown.render("> Some\n\n[markdown](http://www.example.com)");
 ```
 into your javascript console.
 

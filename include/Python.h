@@ -143,7 +143,7 @@ int main(void) {
   return 0;
 }
 
-const char *convert(char *text) {
+const char *render(char *text) {
   instring->size = 0;
   outstring->size = 0;
   bufputs(instring, text);
