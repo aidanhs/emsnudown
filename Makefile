@@ -24,17 +24,19 @@ CHKFLAGS=
           -s CHECK_OVERFLOWS=1\
           -s CHECK_SIGNED_OVERFLOWS=1
 
-.PHONY: all clean js html opt.js opt.html
+.PHONY: all clean js html chk.js chk.html opt.js opt.html
 
-all: js html opt.js opt.html
+all: js html chk.js chk.html opt.js opt.html
 
 .SECONDEXPANSION:
-js html opt.js opt.html: build/$(PREFIX).$$@
+js html chk.js chk.html opt.js opt.html: build/$(PREFIX).$$@
 
 clean:
 	rm -f build/*
 
 build/$(PREFIX).html build/$(PREFIX).js: $(FILES)
+	$(EMCC) $(FILES) $(INC) $(EMFLAGS) -o $@
+build/$(PREFIX).chk.html build/$(PREFIX).chk.js: $(FILES)
 	$(EMCC) $(FILES) $(INC) $(EMFLAGS) $(CHKFLAGS) -o $@
 build/$(PREFIX).opt.js build/$(PREFIX).opt.html: $(FILES)
 	$(EMCC) $(FILES) $(INC) $(EMFLAGS) $(OPTFLAGS) -o $@
