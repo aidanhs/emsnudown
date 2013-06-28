@@ -27,7 +27,7 @@ def _force_utf8(text):
 # Actual test
 import json
 import snudown
-import subprocess
+from subprocess import PIPE, Popen
 
 fail = 0
 success = 0
@@ -40,11 +40,14 @@ with open(filename) as f:
     print "PROCESSING COMMENT " + str(i) + " OF " + str(num_lines)
     body_utf8 = _force_utf8(json.loads(line)["body"])
     snudown_out = snudown.markdown(body_utf8)
-    emsnudown_out = subprocess.check_output([
+    emsnudown = Popen([
         "node", "-p",
-        "require('../build/emsd.opt.js').snudown.convert(process.argv[1]);",
-        body_utf8
-        ])[:-1] # Get rid of trailing newline
+        "require('../build/emsd.opt.js').snudown.convert(" +
+          "require('fs').readFileSync('/dev/stdin').toString()" +
+        ");"
+        ], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    emsnudown_out, err = emsnudown.communicate(body_utf8)
+    emsnudown_out = emsnudown_out[:-1] # Get rid of trailing newline
     try:
       assert snudown_out == emsnudown_out
       success += 1
