@@ -115,5 +115,5 @@ if __name__ == '__main__':
   }
   if sys.argv[1] in options:
     options[sys.argv[1]]()
-  else
+  else:
     print "Operation not recognised"
