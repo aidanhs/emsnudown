@@ -31,10 +31,12 @@ import subprocess
 
 fail = 0
 success = 0
+skip = 0
 filename = "commentdata/2013-06-27_HOUR-21"
 num_lines = sum(1 for line in open(filename))
 with open(filename) as f:
   for i, line in enumerate(f.readlines()):
+    if (i < skip): continue
     print "PROCESSING COMMENT " + str(i) + " OF " + str(num_lines)
     body_utf8 = _force_utf8(json.loads(line)["body"])
     snudown_out = snudown.markdown(body_utf8)
