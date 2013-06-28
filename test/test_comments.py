@@ -24,21 +24,13 @@ def _force_unicode(text):
 def _force_utf8(text):
       return str(_force_unicode(text).encode('utf8'))
 
-# Actual test
+import tempfile
 import json
 import snudown
 from subprocess import PIPE, Popen
 
-fail = 0
-success = 0
-skip = 0
-filename = "commentdata/2013-06-27_HOUR-21"
-num_lines = sum(1 for line in open(filename))
-with open(filename) as f:
-  for i, line in enumerate(f.readlines()):
-    if (i < skip): continue
-    print "PROCESSING COMMENT " + str(i) + " OF " + str(num_lines)
-    body_utf8 = _force_utf8(json.loads(line)["body"])
+# Utility functions
+def test_equal(body_utf8):
     snudown_out = snudown.markdown(body_utf8)
     emsnudown = Popen([
         "node", "-p",
@@ -58,7 +50,7 @@ with open(filename) as f:
     snuownd_out = snuownd_out[:-1] # Get rid of trailing newline
     try:
       assert snudown_out == emsnudown_out == snuownd_out
-      success += 1
+      return (True, snudown_out)
     except:
       print "============"
       print "=== BODY:"
@@ -70,7 +62,48 @@ with open(filename) as f:
       print "=== SNUOWND:"
       print snuownd_out
       print "============"
-      fail += 1
+      return (False, None)
+
+# ============
+# Sanity tests
+# ============
+print "SANITY"
+fail = 0
+success = 0
+sys.path.append("../snudown")
+import test_snudown
+for key in test_snudown.cases:
+  equal, result = test_equal(key)
+  if equal:
+    assert result == test_snudown.cases[key]
+    success += 1
+  else:
+    fail += 1
 
 print "FAIL: " + str(fail)
 print "SUCCESS: " + str(success)
+if fail > 0:
+  print "FAILED SANITY TESTS"
+  exit(1)
+
+# ============
+# Test a real set of comments
+# ============
+print "COMMENTS"
+fail = 0
+success = 0
+#skip = 3300
+skip = 0
+filename = "commentdata/2013-06-27_HOUR-21"
+num_lines = sum(1 for line in open(filename))
+with open(filename) as f:
+  for i, line in enumerate(f.readlines()):
+    if (i < skip): continue
+    print "PROCESSING COMMENT " + str(i) + " OF " + str(num_lines)
+    body_utf8 = _force_utf8(json.loads(line)["body"])
+    equal, result = check_equal(body_utf8)
+    if equal:
+      success += 1
+    else:
+      fail += 1
+
