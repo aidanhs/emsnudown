@@ -30,7 +30,7 @@ import snudown
 from subprocess import PIPE, Popen
 
 # Utility functions
-def test_equal(body_utf8):
+def check_equal(body_utf8):
     snudown_out = snudown.markdown(body_utf8)
     emsnudown = Popen([
         "node", "-p",
@@ -74,7 +74,7 @@ def sanity_test():
   sys.path.append("../snudown")
   import test_snudown
   for key in test_snudown.cases:
-    equal, result = test_equal(key)
+    equal, result = check_equal(key)
     if equal:
       assert result == test_snudown.cases[key]
       success += 1
