@@ -126,49 +126,45 @@ def benchmark_test():
       if (i > max_num): break
       cases.append(_force_utf8(json.loads(line)["body"]))
 
+  boiler_bench = """
+    var cases = JSON.parse(require('fs').readFileSync('/dev/stdin').toString());
+    var x = []; x.length = cases.length;
+    for (var i = 0, l = cases.length; i++; i < l) {
+      x[i] = render(cases[i]);
+    }
+    console.log("done");
+    """
   def bench_snuownd(cases_json):
     snuownd = Popen([
       "node", "-e",
-      """
-      var md = require('./snuownd/snuownd.js').getParser();
-      var cases = JSON.parse(require('fs').readFileSync('/dev/stdin').toString());
-      for (var i = 0, l = cases.length; i++; i < l) {
-        md.render(cases[i]);
-      }
-      """
+      "var render = require('./snuownd/snuownd.js').getParser().render;" + boiler_bench
     ], stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    snuownd.communicate(cases_json)
+    out, err = snuownd.communicate(cases_json)
+    assert out == "done\n"
+    assert err == ""
 
   def bench_emsnudown(cases_json):
     emsnudown = Popen([
       "node", "-e",
-      """
-      var md = require('../build/emsd.opt.js');
-      var cases = JSON.parse(require('fs').readFileSync('/dev/stdin').toString());
-      for (var i = 0, l = cases.length; i++; i < l) {
-        md.convert(cases[i]);
-      }
-      """
+      "var render = require('../build/emsd.opt.js').render;" + boiler_bench
     ], stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    emsnudown.communicate(cases_json)
+    out, err = emsnudown.communicate(cases_json)
+    assert out == "done\n"
+    assert err == ""
 
+  benches = [
+      { "desc": "Initialisation speed",     "data": [],            "num": 100 },
+      { "desc": "Medium number of renders", "data": cases[:600],   "num": 70  },
+      { "desc": "Large number of renders",  "data": cases[:30000], "num": 20  }
+  ]
   print "RUNNING"
-  print "Testing initialisation speed"
-  print "SnuOwnd ",
-  print timeit.timeit(lambda: bench_snuownd(json.dumps([])), number=100)
-  print "EmSnudown ",
-  print timeit.timeit(lambda: bench_emsnudown(json.dumps([])), number=100)
-  print "Testing medium number of renders"
-  print "SnuOwnd ",
-  print timeit.timeit(lambda: bench_snuownd(json.dumps(cases[:600])), number=70)
-  print "EmSnudown ",
-  print timeit.timeit(lambda: bench_emsnudown(json.dumps(cases[:600])), number=70)
-  print "Testing large number of renders"
-  print "SnuOwnd ",
-  print timeit.timeit(lambda: bench_snuownd(json.dumps(cases[:30000])), number=20)
-  print "EmSnudown ",
-  print timeit.timeit(lambda: bench_emsnudown(json.dumps(cases[:30000])), number=20)
-  pass
+  for bench in benches:
+    print bench["desc"]
+    json_data = json.dumps(bench["data"])
+    print "SnuOwnd " + str(timeit.timeit(
+      lambda: bench_snuownd(json_data), number=bench["num"]))
+    print "EmSnudown " + str(timeit.timeit(
+      lambda: bench_emsnudown(json_data), number=bench["num"]))
 
 
 if __name__ == '__main__':
