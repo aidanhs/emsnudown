@@ -32,7 +32,8 @@ typedef void PyMODINIT_FUNC;
 
 // The below 'dict' is implemented as a (fixed size) list of 2-ary tuples where
 // each tuple contains a name (string) and a value (int or string in a buffer).
-// TODO: pure js implementation, this is just a js object
+// The value could be a union, but emscripten recommends against it.
+// TODO: pure js implementation - implement as a js object
 // TODO: don't statically size arrays...though if moving to js object
 //       it possibly doesn't matter
 static const int STR_SIZE = 20;
@@ -45,10 +46,8 @@ struct h_tuple {
   char name[STR_SIZE];
   int type;
 
-  union {
-    int int_v;
-    struct buf *str_v;
-  } value;
+  int int_v;
+  struct buf *str_v;
 };
 struct h_dict {
   struct h_tuple keyvals[OBJ_SIZE];
@@ -92,14 +91,14 @@ static PyObject *Py_InitModule3(char *name, PyMethodDef *methods, char *doc) {
 // some information stored is actually important (specifically, renderers).
 static void PyModule_AddIntConstant(PyObject *o, char *name, int value) {
   strcpy(o->keyvals[o->keyval_length].name, name);
-  o->keyvals[o->keyval_length].value.int_v = value;
+  o->keyvals[o->keyval_length].int_v = value;
   o->keyvals[o->keyval_length].type = INT;
   o->keyval_length++;
 }
 static void PyModule_AddStringConstant(PyObject *o, char *name, char *value) {
   strcpy(o->keyvals[o->keyval_length].name, name);
-  o->keyvals[o->keyval_length].value.str_v = bufnew(strlen(value));
-  bufputs(o->keyvals[o->keyval_length].value.str_v, value);
+  o->keyvals[o->keyval_length].str_v = bufnew(strlen(value));
+  bufputs(o->keyvals[o->keyval_length].str_v, value);
   o->keyvals[o->keyval_length].type = STR;
   o->keyval_length++;
 }
