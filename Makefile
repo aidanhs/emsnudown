@@ -3,6 +3,8 @@ FILES=snudown/snudown.c snudown/src/*.c snudown/html/*.c
 INC=-Isnudown/html -Isnudown/src -Iinclude
 EMCC=../emscripten/emcc
 EMFLAGS=-s EXPORTED_FUNCTIONS="['_main','_render']" --pre-js js/preJs.js --post-js js/postJs.js --js-library js/pylib.js
+# First general optimisation, then disable maths stuff,
+# then memory reduction, then advanced optimisation
 # TODO: chk: -s CHECK_SIGNS=1, opt: -s CORRECT_SIGNS=0
 # -s CORRECT_OVERFLOWS=0 overridden by asm.js generation
 OPTFLAGS=\
@@ -13,6 +15,8 @@ OPTFLAGS=\
           -s PRECISE_I32_MUL=0\
           -s DOUBLE_MODE=0\
           -s PRECISE_I64_MATH=0\
+          -s TOTAL_MEMORY=4194304\
+          -s TOTAL_STACK=2097152\
           -s CLOSURE_ANNOTATIONS=1\
           -s RELOOP=1\
           -s CORRECT_ROUNDINGS=0
