@@ -106,7 +106,7 @@ def comments_test():
         success += 1
       else:
         fail += 1
-        #break
+        break
 
 # ============
 # Benchmarking
