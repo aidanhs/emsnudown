@@ -24,48 +24,22 @@ typedef struct PyMethodDef PyMethodDef;
 
 /*
  * ============
- * Shims for Python.h types
+ * Shims for Python.h types and variables and globals for making shims simpler
  * ============
  */
 // TODO: need to call this on initialisation of emscript automatically
 typedef void PyMODINIT_FUNC;
 
-// The below 'dict' is implemented as a (fixed size) list of 2-ary tuples where
-// each tuple contains a name (string) and a value (int or string in a buffer).
-// The value could be a union, but emscripten recommends against it.
-// TODO: pure js implementation - implement as a js object
-// TODO: don't statically size arrays...though if moving to js object
-//       it possibly doesn't matter
-static const int STR_SIZE = 20;
-static const int OBJ_SIZE = 5;
-enum h_type {
-  INT = 0,
-  STR
-};
-struct h_tuple {
-  char name[STR_SIZE];
-  int type;
-
-  int int_v;
-  struct buf *str_v;
-};
-struct h_dict {
-  struct h_tuple keyvals[OBJ_SIZE];
-  int keyval_length;
-};
-typedef struct h_dict PyObject;
-
-/*
- * ============
- * Global variables used for efficiency and making shims simpler
- * ============
- */
-// This is an equivalent of the (singleton?) module object Python stores all
-// module properties in, but we only do things with it when forced to.
-static PyObject emscript_module = { .keyval_length = 0 };
-
-// Just so we don't malloc/free a python object on every call to buildvalue.
-static PyObject outobj;
+// 'Empty' datatype to represent a PyObject. This is because we don't actually
+// do anything with them in our shims, but they do get passed around so we make
+// them really simple.
+typedef const int PyObject;
+// As we dont do anything with them, may as well only initialise once.
+static PyObject emscript_module = 0;
+static PyObject outobj = 0;
+static PyObject self = 0;
+static PyObject args = 0;
+static PyObject kwargs = 0;
 
 // TODO: don't use globals, but fine for now because single threaded
 static struct buf *instring;
@@ -87,8 +61,9 @@ static PyObject *Py_InitModule3(char *name, PyMethodDef *methods, char *doc) {
 // TODO: print type as well
 #define PyErr_SetString(type,str) printf(str)
 
-// The following two methods actually do add items to the module object as
-// some information stored is actually important (specifically, renderers).
+// The following two methods do add items to the module object as some
+// information is important (i.e. renderers). The functions are implemented in
+// js/pylib.js.
 extern void PyModule_AddIntConstant(PyObject *o, char *name, int value);
 extern void PyModule_AddStringConstant(PyObject *o, char *name, char *value);
 
@@ -136,9 +111,6 @@ const char *render(char *text) {
   instring->size = 0;
   outstring->size = 0;
   bufputs(instring, text);
-  PyObject self;
-  PyObject args;
-  PyObject kwargs;
 
   snudown_md(&self, &args, &kwargs);
 
