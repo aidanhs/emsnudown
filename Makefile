@@ -2,7 +2,7 @@ PREFIX=emsd
 FILES=snudown/snudown.c snudown/src/*.c snudown/html/*.c
 INC=-Isnudown/html -Isnudown/src -Iinclude
 EMCC=../emscripten/emcc
-EMFLAGS=-s EXPORTED_FUNCTIONS="['_main','_render']" --pre-js js/preJs.js --post-js js/postJs.js
+EMFLAGS=-s EXPORTED_FUNCTIONS="['_main','_render']" --pre-js js/preJs.js --post-js js/postJs.js --js-library js/pylib.js
 # TODO: chk: -s CHECK_SIGNS=1, opt: -s CORRECT_SIGNS=0
 # -s CORRECT_OVERFLOWS=0 overridden by asm.js generation
 OPTFLAGS=\

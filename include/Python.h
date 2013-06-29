@@ -89,19 +89,8 @@ static PyObject *Py_InitModule3(char *name, PyMethodDef *methods, char *doc) {
 
 // The following two methods actually do add items to the module object as
 // some information stored is actually important (specifically, renderers).
-static void PyModule_AddIntConstant(PyObject *o, char *name, int value) {
-  strcpy(o->keyvals[o->keyval_length].name, name);
-  o->keyvals[o->keyval_length].int_v = value;
-  o->keyvals[o->keyval_length].type = INT;
-  o->keyval_length++;
-}
-static void PyModule_AddStringConstant(PyObject *o, char *name, char *value) {
-  strcpy(o->keyvals[o->keyval_length].name, name);
-  o->keyvals[o->keyval_length].str_v = bufnew(strlen(value));
-  bufputs(o->keyvals[o->keyval_length].str_v, value);
-  o->keyvals[o->keyval_length].type = STR;
-  o->keyval_length++;
-}
+extern void PyModule_AddIntConstant(PyObject *o, char *name, int value);
+extern void PyModule_AddStringConstant(PyObject *o, char *name, char *value);
 
 // BuildValue should create a python object. In snudown it's only used to build
 // the string to return. We can skip all that by just putting it in our global
