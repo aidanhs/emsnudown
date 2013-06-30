@@ -68,7 +68,7 @@ static PyObject *Py_InitModule3(char *name, PyMethodDef *methods, char *doc) {
 }
 
 // TODO: print type as well
-#define PyErr_SetString(type,str) printf(str)
+#define PyErr_SetString(type,str) printf("ERR: %s\n",str)
 
 // The following two methods do add items to the module object as some
 // information is important (i.e. renderers). The functions are implemented in
@@ -141,6 +141,8 @@ const char *render(
 
   snudown_md(&self, &args, &kwargs);
 
+  // TODO: find out how this works, does it ever get deallocated? Is it even
+  // safe to do this?
   return bufcstr(outstring);
 }
 
