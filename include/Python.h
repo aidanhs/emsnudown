@@ -41,8 +41,17 @@ static PyObject self = 0;
 static PyObject args = 0;
 static PyObject kwargs = 0;
 
-// TODO: don't use globals, but fine for now because single threaded
-static struct buf *instring;
+// TODO: don't use globals, but fine for now because typing a comment
+// is single threaded (need to make sure we only have one call going on at a time).
+static struct {
+  struct buf *text;
+  int arg_nofollow;      int nofollow;
+  int arg_target;        char *target;
+  int arg_toc_id_prefix; char *toc_id_prefix;
+  int arg_renderer;      int renderer;
+  int arg_enable_toc;    int enable_toc;
+} renderargs;
+
 static struct buf *outstring;
 
 /*
@@ -83,8 +92,13 @@ static PyObject *Py_BuildValue(const char *fmt, const char *str, int size) {
 // TODO: actually might need different arguments, but we definitely don't want
 // to do it properly. Maybe a global struct to hold the arguments?
 static int PyArg_ParseTupleAndKeywords(PyObject *args, PyObject *kwargs, char *fmt, char *kwlist[], uint8_t **data, size_t *size, int *nofollow, char **target, char **toc_id_prefix, int *renderer, int *enable_toc) {
-  *data = instring->data;
-  *size = instring->size;
+  *data = renderargs.text->data;
+  *size = renderargs.text->size;
+  if (renderargs.arg_nofollow)      { *nofollow = renderargs.nofollow; }
+  if (renderargs.arg_target)        { *target = renderargs.target; }
+  if (renderargs.arg_toc_id_prefix) { *toc_id_prefix = renderargs.toc_id_prefix; }
+  if (renderargs.arg_renderer)      { *renderer = renderargs.renderer; }
+  if (renderargs.arg_enable_toc)    { *enable_toc = renderargs.enable_toc; }
   return 1;
 }
 
@@ -101,16 +115,29 @@ static PyObject *snudown_md(PyObject *self, PyObject *args, PyObject *kwargs);
 // EXPORTS
 
 int main(void) {
-  instring = bufnew(128);
+  renderargs.text = bufnew(128);
   outstring = bufnew(128);
   initsnudown();
   return 0;
 }
 
-const char *render(char *text) {
-  instring->size = 0;
+const char *render(
+    char *text,
+    int arg_nofollow,      int nofollow,
+    int arg_target,        char *target,
+    int arg_toc_id_prefix, char *toc_id_prefix,
+    int arg_renderer,      int renderer,
+    int arg_enable_toc,    int enable_toc) {
+
   outstring->size = 0;
-  bufputs(instring, text);
+
+  renderargs.text->size = 0;
+  bufputs(renderargs.text, text);
+  renderargs.arg_nofollow =      arg_nofollow;      renderargs.nofollow =      nofollow;
+  renderargs.arg_target =        arg_target;        renderargs.target =        target;
+  renderargs.arg_toc_id_prefix = arg_toc_id_prefix; renderargs.toc_id_prefix = toc_id_prefix;
+  renderargs.arg_renderer =      arg_renderer;      renderargs.renderer =      renderer;
+  renderargs.arg_enable_toc =    arg_enable_toc;    renderargs.enable_toc =    enable_toc;
 
   snudown_md(&self, &args, &kwargs);
 
