@@ -184,8 +184,11 @@ if __name__ == '__main__':
         "comments": comments_test,
         "benchmark": benchmark_test
     }
-    if sys.argv[1] in options:
+    if len(sys.argv) == 2 and sys.argv[1] in options:
         options[sys.argv[1]]()
     else:
-        print "Operation not recognised"
+        if (len(sys.argv) == 2):
+            print "Operation not recognised"
+        else:
+            print "Need to specify an operation"
         print "Try one of " + ", ".join(options.keys())
