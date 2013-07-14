@@ -81,11 +81,11 @@ def sanity_test():
     import test_snudown
     for key in test_snudown.cases:
         equal, result = check_equal(key)
-    if equal:
-        assert result == test_snudown.cases[key]
-        success += 1
-    else:
-        fail += 1
+        if equal:
+            assert result == test_snudown.cases[key]
+            success += 1
+        else:
+            fail += 1
 
     print "FAIL: " + str(fail)
     print "SUCCESS: " + str(success)
