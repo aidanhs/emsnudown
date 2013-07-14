@@ -7,7 +7,7 @@ typedef void *PyCFunction;
 
 /*
  * ============
- * Lift some defs from official Python.h
+ * Lift some defs verbatim from official Python.h
  * ============
  */
 #define PyDoc_STRVAR(name,str) static char name[] = str
@@ -41,8 +41,8 @@ static PyObject self = 0;
 static PyObject args = 0;
 static PyObject kwargs = 0;
 
-// TODO: don't use globals, but fine for now because typing a comment
-// is single threaded (need to make sure we only have one call going on at a time).
+// Global struct to hold the arguments passed to the render call
+// TODO: js is single threaded so global is fine
 static struct {
   struct buf *text;
   int arg_nofollow;      int nofollow;
@@ -87,10 +87,9 @@ static PyObject *Py_BuildValue(const char *fmt, const char *str, int size) {
   return &outobj;
 }
 
-// Get all the arguments from the python (kw)args object. For now, just leave
-// options as default so we just render the actual text, no fussing.
-// TODO: actually might need different arguments, but we definitely don't want
-// to do it properly. Maybe a global struct to hold the arguments?
+// Get all the arguments from the python (kw)args object. We shim this by
+// putting all arguments into a global renderargs object and completely ignoring
+// the args and kwargs arguments.
 static int PyArg_ParseTupleAndKeywords(PyObject *args, PyObject *kwargs, char *fmt, char *kwlist[], uint8_t **data, size_t *size, int *nofollow, char **target, char **toc_id_prefix, int *renderer, int *enable_toc) {
   *data = renderargs.text->data;
   *size = renderargs.text->size;
@@ -114,13 +113,18 @@ static PyObject *snudown_md(PyObject *self, PyObject *args, PyObject *kwargs);
 
 // EXPORTS
 
+// Initialisation call
 int main(void) {
+  // Set up some global buffers to hold the in and out strings
   renderargs.text = bufnew(128);
   outstring = bufnew(128);
+  // Get snudown to initialise renderers etc
   initsnudown();
   return 0;
 }
 
+// Actual rendering call
+// arg_* indicate whether the argument value is present
 const char *render(
     char *text,
     int arg_nofollow,      int nofollow,
@@ -129,10 +133,12 @@ const char *render(
     int arg_renderer,      int renderer,
     int arg_enable_toc,    int enable_toc) {
 
+  // Wipe the in and out string buffers
   outstring->size = 0;
-
   renderargs.text->size = 0;
+
   bufputs(renderargs.text, text);
+
   renderargs.arg_nofollow =      arg_nofollow;      renderargs.nofollow =      nofollow;
   renderargs.arg_target =        arg_target;        renderargs.target =        target;
   renderargs.arg_toc_id_prefix = arg_toc_id_prefix; renderargs.toc_id_prefix = toc_id_prefix;
