@@ -43,12 +43,17 @@ See snudown documentation for information on optional arguments.
 Build information
 -----------------
 
-`make` will generate four files by default.
+`make` will generate six files by default.
 
 `emsd.opt.*` files have optimisations
-enabled so should be significantly smaller and faster than the other two. If
+enabled so should be significantly smaller and faster than the other four. If
 something is broken, it's possibly worth checking if it's an optimisation by
 running with the non-optimised version.
+
+`emsd.chk.*` files have additional checks and assertions enabled and should
+be useful for debugging.
+
+emsd.* (i.e. not chk or opt) are produced by the default emscripten options.
 
 `*.js` files are the core of the EmSnudown offer. In particular, you probably
 want emsd.opt.js if you want to use EmSnudown in a project.
@@ -60,11 +65,6 @@ Only useful if you want to play around immediately with a build.
 Plans
 -----
 
-Tests.
- - Need to compare against Snudown - use Snudown tests initially.
- - Would be interesting to compare against [SnuOwnd](https://github.com/gamefreak/snuownd).
- - A fuzzer would be cool.
- - Use [comment archives](http://www.reddit.com/r/redditdev/comments/1h1wqu/anonymous_ftp_access_for_reddit_comment_data_is/) as input?
-
-Benchmarking. In particular vs SnuOwnd. Again, use comment archives for real
-world testing?
+ - A fuzzer tester would be cool.
+ - Better benchmarking.
+ - Test page (+ in browser benchmarking).
