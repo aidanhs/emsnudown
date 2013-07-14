@@ -27,6 +27,19 @@ snudown.render("> Some\n\n[markdown](http://www.example.com)");
 ```
 into your javascript console.
 
+You can also use the optional keyword arguments from the python module by
+passing an object as the second argument, e.g.
+```
+snudown.render(
+  "Title\n=====\n\n" +
+  "[a link](http://example.com)" +
+  "<table><tbody><tr><td>a</td></tr><tr><td>b</td></tr></tbody></table>",
+  { renderer: snudown.RENDERER_WIKI, enable_toc: true, toc_id_prefix: "abcd" }
+);
+```
+
+See snudown documentation for information on optional arguments.
+
 Build information
 -----------------
 
