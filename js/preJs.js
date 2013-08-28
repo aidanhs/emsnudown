@@ -2,8 +2,9 @@ this['snudown'] = (function () {
 
   var root = {
     emscript: function () {
-      // Prevent emscripten detecting nodejs, as otherwise it breaks?
-      var module = undefined;
+      // Cripple emscripten's attempts to pollute global namespace
+      // under nodejs
+      var module = {};
       var Module = {
         'noInitialRun': true,
         'noExitRuntime': true,

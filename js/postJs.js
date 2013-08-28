@@ -1,9 +1,13 @@
+
+      root['Module'] = Module;
     }
   };
   root.emscript();
+
   // TODO: call this lazily - won't use markdown on every page
   root['Module']['run']();
   root['Module']['callMain']();
+
   var renderWrap = root['Module']['cwrap']('render', 'string', [
     'string',          // text
     'number','number', // nofollow
@@ -21,6 +25,7 @@
       opts['renderer']      !== void 0 ? 1 : 0, opts['renderer'],
       opts['enable_toc']    !== void 0 ? 1 : 0, opts['enable_toc']);
   };
+
   return root;
 
   // The below doesn't work closure compiled, see emscripten issue 704
