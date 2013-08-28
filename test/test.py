@@ -34,26 +34,52 @@ from subprocess import PIPE, Popen
 # ============
 # Utility functions
 # ============
+
+
+noderender = """
+    process.stdin.resume();
+    process.stdin.setEncoding('utf8');
+    process.stdin.on('data', function (d) {
+      var txt = rndr(d);
+      var pre = ('        ' + Buffer.byteLength(txt, 'utf8')).slice(-8);
+      process.stdout.write(pre + txt);
+    });
+    """
+
+emsnudown = snuownd = None
+
+def preprenderers():
+    global emsnudown
+    global snuownd
+    emsnudown = Popen(["node", "-e",
+        "var rndr = require('../build/emsd.opt.js').snudown.render;" +
+        noderender
+        ], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    snuownd = Popen(["node", "-e",
+        "var prsr = require('./snuownd/snuownd.js').getParser();" +
+        "var rndr = function (t) { return prsr.render(t); };" +
+        noderender
+        ], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+
+def killrenderers():
+    emsnudown.kill()
+    snuownd.kill()
+
+def renderwith(process, body):
+    process.stdin.write(body + "\n")
+    process.stdin.flush()
+    length = int(process.stdout.read(8))
+    return process.stdout.read(length)
+
 # Check that the output of rendering
 def check_equal(body):
     body_utf8 = _force_utf8(body)
+    # SNUDOWN
     snudown_out = snudown.markdown(body_utf8)
-    emsnudown = Popen([
-        "node", "-p",
-        "require('../build/emsd.opt.js').snudown.render(" +
-        "require('fs').readFileSync('/dev/stdin').toString()" +
-        ");"
-        ], stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    emsnudown_out, err = emsnudown.communicate(body_utf8)
-    emsnudown_out = emsnudown_out[:-1] # Get rid of trailing newline
-    snuownd = Popen([
-        "node", "-p",
-        "require('./snuownd/snuownd.js').getParser().render(" +
-        "require('fs').readFileSync('/dev/stdin').toString()" +
-        ");"
-        ], stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    snuownd_out, err = snuownd.communicate(body_utf8)
-    snuownd_out = snuownd_out[:-1] # Get rid of trailing newline
+    # EMSNUDOWN
+    emsnudown_out = renderwith(emsnudown, body_utf8)
+    # SNUOWND
+    snuownd_out = renderwith(snuownd, body_utf8)
     try:
         assert snudown_out == emsnudown_out == snuownd_out
         return (True, snudown_out)
@@ -99,7 +125,7 @@ def comments_test():
     print "COMMENTS"
     fail = 0
     success = 0
-    skip = 1222
+    skip = 0
     filename = "commentdata/2013-06-27_HOUR-21"
     num_lines = sum(1 for line in open(filename))
     with open(filename) as f:
@@ -185,7 +211,11 @@ if __name__ == '__main__':
         "benchmark": benchmark_test
     }
     if len(sys.argv) == 2 and sys.argv[1] in options:
-        options[sys.argv[1]]()
+        try:
+            preprenderers()
+            options[sys.argv[1]]()
+        finally:
+            killrenderers()
     else:
         if (len(sys.argv) == 2):
             print "Operation not recognised"
