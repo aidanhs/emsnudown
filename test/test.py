@@ -148,6 +148,7 @@ def comments_test():
                 log.write("\n")
             sys.stdout.flush()
     log.close()
+    print("")
     print("FAIL: " + str(fail))
     print("SUCCESS: " + str(success))
     print("")
