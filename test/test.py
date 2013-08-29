@@ -86,23 +86,24 @@ def check_equal(body):
         assert snudown_out == emsnudown_out == snuownd_out
         return (True, snudown_out)
     except:
-        print("============")
-        print("=== BODY:")
-        print(body_utf8)
-        print("=== SNUDOWN:")
-        print(snudown_out)
-        print("=== EMSNUDOWN:")
-        print(emsnudown_out)
-        print("=== SNUOWND:")
-        print(snuownd_out)
-        print("============")
-        return (False, None)
+        err = ""
+        err += "================\n"
+        err += "=== BODY:\n"
+        err += body_utf8 + "\n"
+        err += "=== SNUDOWN:\n"
+        err += snudown_out + "\n"
+        err += "=== EMSNUDOWN:\n"
+        err += emsnudown_out + "\n"
+        err += "=== SNUOWND:\n"
+        err += snuownd_out + "\n"
+        err += "================\n"
+        return (False, err)
 
 # ============
 # Sanity tests
 # ============
 def sanity_test():
-    print("SANITY")
+    print("SANITY\n")
     fail = 0
     success = 0
     sys.path.append("../snudown")
@@ -113,34 +114,43 @@ def sanity_test():
             assert result == test_snudown.cases[key]
             success += 1
         else:
+            print(result)
             fail += 1
 
     print("FAIL: " + str(fail))
     print("SUCCESS: " + str(success))
     if fail > 0:
-        print("FAILED SANITY TESTS")
+        print("ERRORS IN SANITY TESTS")
 
 # ============
 # Real comment tests
 # ============
 def comments_test():
-    print("COMMENTS")
+    print("COMMENTS\n")
     fail = 0
     success = 0
     skip = 0
     filename = "commentdata/2013-06-27_HOUR-21"
-    num_lines = sum(1 for line in open(filename))
+    log = open("comments.test.log", "w")
     with open(filename) as f:
         for i, line in enumerate(f.readlines()):
             if (i < skip): continue
-            print("PROCESSING COMMENT " + str(i) + " OF " + str(num_lines))
             body = json.loads(line)["body"]
             equal, result = check_equal(body)
             if equal:
+                print(".", end="")
                 success += 1
             else:
+                print("F", end="")
                 fail += 1
-                break
+                log.write("Comment " + str(i) + "\n")
+                log.write(err)
+                log.write("\n")
+            sys.stdout.flush()
+    log.close()
+    print("FAIL: " + str(fail))
+    print("SUCCESS: " + str(success))
+    print("")
 
 # ============
 # Benchmark tests
@@ -148,7 +158,7 @@ def comments_test():
 # TODO: update to use long running processes
 import timeit
 def benchmark_test():
-    print("BENCHMARK")
+    print("BENCHMARK\n")
     max_num = 10000000
     filename = "commentdata/2013-06-27_HOUR-21"
     num_lines = sum(1 for line in open(filename))
