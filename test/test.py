@@ -144,7 +144,7 @@ def comments_test():
                 print("F", end="")
                 fail += 1
                 log.write("Comment " + str(i) + "\n")
-                log.write(err)
+                log.write(result)
                 log.write("\n")
             sys.stdout.flush()
     log.close()
