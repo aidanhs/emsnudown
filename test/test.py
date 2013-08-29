@@ -2,6 +2,8 @@
 # http://www.reddit.com/r/redditdev/comments/1h1wqu/anonymous_ftp_access_for_reddit_comment_data_is/
 # Need to build the snudown module
 
+from __future__ import print_function
+
 import sys
 sys.path.append("../snudown/build/lib.linux-i686-2.7")
 
@@ -84,23 +86,23 @@ def check_equal(body):
         assert snudown_out == emsnudown_out == snuownd_out
         return (True, snudown_out)
     except:
-        print "============"
-        print "=== BODY:"
-        print body_utf8
-        print "=== SNUDOWN:"
-        print snudown_out
-        print "=== EMSNUDOWN:"
-        print emsnudown_out
-        print "=== SNUOWND:"
-        print snuownd_out
-        print "============"
+        print("============")
+        print("=== BODY:")
+        print(body_utf8)
+        print("=== SNUDOWN:")
+        print(snudown_out)
+        print("=== EMSNUDOWN:")
+        print(emsnudown_out)
+        print("=== SNUOWND:")
+        print(snuownd_out)
+        print("============")
         return (False, None)
 
 # ============
 # Sanity tests
 # ============
 def sanity_test():
-    print "SANITY"
+    print("SANITY")
     fail = 0
     success = 0
     sys.path.append("../snudown")
@@ -113,16 +115,16 @@ def sanity_test():
         else:
             fail += 1
 
-    print "FAIL: " + str(fail)
-    print "SUCCESS: " + str(success)
+    print("FAIL: " + str(fail))
+    print("SUCCESS: " + str(success))
     if fail > 0:
-        print "FAILED SANITY TESTS"
+        print("FAILED SANITY TESTS")
 
 # ============
 # Real comment tests
 # ============
 def comments_test():
-    print "COMMENTS"
+    print("COMMENTS")
     fail = 0
     success = 0
     skip = 0
@@ -131,7 +133,7 @@ def comments_test():
     with open(filename) as f:
         for i, line in enumerate(f.readlines()):
             if (i < skip): continue
-            print "PROCESSING COMMENT " + str(i) + " OF " + str(num_lines)
+            print("PROCESSING COMMENT " + str(i) + " OF " + str(num_lines))
             body = json.loads(line)["body"]
             equal, result = check_equal(body)
             if equal:
@@ -143,16 +145,17 @@ def comments_test():
 # ============
 # Benchmark tests
 # ============
+# TODO: update to use long running processes
 import timeit
 def benchmark_test():
-    print "BENCHMARK"
+    print("BENCHMARK")
     max_num = 10000000
     filename = "commentdata/2013-06-27_HOUR-21"
     num_lines = sum(1 for line in open(filename))
     if num_lines < max_num: max_num = num_lines
     cases = []
 
-    print "PREPARING"
+    print("PREPARING")
     with open(filename) as f:
         for i, line in enumerate(f.readlines()):
             if (i > max_num): break
@@ -192,14 +195,14 @@ def benchmark_test():
         { "desc": "Medium number of renders", "data": cases[:600],   "num": 70  },
         { "desc": "Large number of renders",  "data": cases[:30000], "num": 20  }
     ]
-    print "RUNNING"
+    print("RUNNING")
     for bench in benches:
-        print bench["desc"]
+        print(bench["desc"])
         json_data = json.dumps(bench["data"])
-        print "SnuOwnd " + str(timeit.timeit(
-            lambda: bench_snuownd(json_data), number=bench["num"]))
-        print "EmSnudown " + str(timeit.timeit(
-            lambda: bench_emsnudown(json_data), number=bench["num"]))
+        print("SnuOwnd " + str(timeit.timeit(
+            lambda: bench_snuownd(json_data), number=bench["num"])))
+        print("EmSnudown " + str(timeit.timeit(
+            lambda: bench_emsnudown(json_data), number=bench["num"])))
 
 # ============
 # Execute tests if called from command line
@@ -218,7 +221,8 @@ if __name__ == '__main__':
             killrenderers()
     else:
         if (len(sys.argv) == 2):
-            print "Operation not recognised"
+            print("Operation not recognised")
         else:
-            print "Need to specify an operation"
-        print "Try one of " + ", ".join(options.keys())
+            print("Need to specify an operation")
+        print("Try one of " + ", ".join(options.keys()))
+
