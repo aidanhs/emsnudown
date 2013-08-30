@@ -30,7 +30,6 @@ def _force_utf8(text):
 
 import tempfile
 import json
-import snudown
 from subprocess import PIPE, Popen
 
 # ============
@@ -48,11 +47,14 @@ noderender = """
     });
     """
 
-emsnudown = snuownd = None
+snudown = emsnudown = snuownd = None
 
 def preprenderers():
+    global snudown
     global emsnudown
     global snuownd
+
+    import snudown
     emsnudown = Popen(["node", "-e",
         "var rndr = require('../build/emsd.opt.js').snudown.render;" +
         noderender
@@ -67,21 +69,23 @@ def killrenderers():
     emsnudown.kill()
     snuownd.kill()
 
-def renderwith(process, body):
-    process.stdin.write(body + "\n")
-    process.stdin.flush()
-    length = int(process.stdout.read(8))
-    return process.stdout.read(length)
+def renderwith(renderer, body):
+    body_utf8 = _force_utf8(body)
+    if renderer is snudown:
+        return snudown.markdown(body_utf8)
+    renderer.stdin.write(body_utf8 + "\n")
+    renderer.stdin.flush()
+    length = int(renderer.stdout.read(8))
+    return renderer.stdout.read(length)
 
 # Check that the output of rendering
 def check_equal(body):
-    body_utf8 = _force_utf8(body)
     # SNUDOWN
-    snudown_out = snudown.markdown(body_utf8)
+    snudown_out = renderwith(snudown, body)
     # EMSNUDOWN
-    emsnudown_out = renderwith(emsnudown, body_utf8)
+    emsnudown_out = renderwith(emsnudown, body)
     # SNUOWND
-    snuownd_out = renderwith(snuownd, body_utf8)
+    snuownd_out = renderwith(snuownd, body)
     try:
         assert snudown_out == emsnudown_out == snuownd_out
         return (True, snudown_out)
@@ -89,7 +93,7 @@ def check_equal(body):
         err = ""
         err += "================\n"
         err += "=== BODY:\n"
-        err += body_utf8 + "\n"
+        err += _force_utf8(body) + "\n"
         err += "=== SNUDOWN:\n"
         err += snudown_out + "\n"
         err += "=== EMSNUDOWN:\n"
