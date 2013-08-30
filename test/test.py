@@ -123,6 +123,27 @@ def sanity_test():
         print("ERRORS IN SANITY TESTS")
 
 # ============
+# Minimal differing examples
+# ============
+def differing_test():
+    print("DIFFERING\n")
+    fail = 0
+    success = 0
+    differs = json.load(open("differing.test"))
+    for key in differs.values():
+        equal, result = check_equal(key)
+        if equal:
+            success += 1
+        else:
+            print(result)
+            fail += 1
+
+    print("FAIL: " + str(fail))
+    print("SUCCESS: " + str(success))
+    if success > 1:
+        print("SUCCESSES IN DIFFERING TESTS")
+
+# ============
 # Real comment tests
 # ============
 def comments_test():
@@ -221,6 +242,7 @@ def benchmark_test():
 if __name__ == '__main__':
     options = {
         "sanity": sanity_test,
+        "differing": differing_test,
         "comments": comments_test,
         "benchmark": benchmark_test
     }
