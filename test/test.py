@@ -26,6 +26,7 @@ def _force_utf8(text):
     return str(_force_unicode(text).encode('utf8'))
 
 import tempfile
+import traceback
 import sys
 import json
 from subprocess import PIPE, Popen
@@ -58,35 +59,35 @@ snudown = emsnudown = snuownd = None
 sys.path.append("../snudown/build/lib.linux-i686-2.7")
 import snudown
 
-def preprenderers(src=noderenderers, return_renderers=False):
-    if not return_renderers:
-        global emsnudown
-        global snuownd
+def preprenderers(src=noderenderers):
 
     emsnudown = Popen(["node", "-e", src["emsnudown"]
         ], stdin=PIPE, stdout=PIPE, stderr=PIPE)
     snuownd = Popen(["node", "-e", src["snuownd"]
         ], stdin=PIPE, stdout=PIPE, stderr=PIPE)
 
-    if return_renderers:
-        return { "emsnudown": emsnudown, "snuownd": snuownd }
+    return { "emsnudown": emsnudown, "snuownd": snuownd }
 
-def killrenderers(renderers=None):
-    if renderers is None:
-        emsnudown.kill()
-        snuownd.kill()
-    else:
-        for renderer in renderers:
-             renderer.kill()
+def killrenderers(renderers):
+    for renderer in renderers:
+        try:
+            renderer.kill()
+        except:
+            pass
+
+def nodesend(renderer, txt):
+    renderer.stdin.write(txt + "\n")
+    renderer.stdin.flush()
+def nodereceive(renderer):
+    length = int(renderer.stdout.read(8))
+    return renderer.stdout.read(length)
 
 def renderwith(renderer, body):
     body_utf8 = _force_utf8(body)
     if renderer is snudown:
         return snudown.markdown(body_utf8)
-    renderer.stdin.write(body_utf8 + "\n")
-    renderer.stdin.flush()
-    length = int(renderer.stdout.read(8))
-    return renderer.stdout.read(length)
+    nodesend(renderer, body_utf8)
+    return nodereceive(renderer)
 
 # Check that the output of rendering
 def check_equal(body):
@@ -262,10 +263,14 @@ if __name__ == '__main__':
     }
     if len(sys.argv) == 2 and sys.argv[1] in options:
         try:
-            preprenderers()
+            renderers = preprenderers()
+            emsnudown = renderers["emsnudown"]
+            snuownd = renderers["snuownd"]
             options[sys.argv[1]]()
+        except:
+            print(traceback.format_exc())
         finally:
-            killrenderers()
+            killrenderers([emsnudown, snuownd])
     else:
         if (len(sys.argv) == 2):
             print("Operation not recognised")
