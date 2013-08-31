@@ -28,6 +28,7 @@ def _force_utf8(text):
 import tempfile
 import traceback
 import sys
+import os
 import json
 from subprocess import PIPE, Popen
 
@@ -192,64 +193,182 @@ def comments_test():
 # ============
 # Benchmark tests
 # ============
-# TODO: update to use long running processes
 import timeit
-def benchmark_test():
+def benchmark_test(requested_benches=None):
     print("BENCHMARK\n")
-    max_num = 10000000
-    filename = "commentdata/2013-06-27_HOUR-21"
-    num_lines = sum(1 for line in open(filename))
-    if num_lines < max_num: max_num = num_lines
-    cases = []
 
-    print("PREPARING")
-    with open(filename) as f:
-        for i, line in enumerate(f.readlines()):
-            if (i > max_num): break
-            cases.append(json.loads(line)["body"])
+    # Benchmark rendering a set of full comments
+    def bench_comments(renderer, cases):
+        x = None
+        for case in cases:
+            x = renderwith(renderer, case)
 
-    # Boilerplate we execute in all cases
-    boiler_bench = """
-      var cases = JSON.parse(require('fs').readFileSync('/dev/stdin').toString());
-      var x = []; x.length = cases.length;
-      for (var i = 0, l = cases.length; i++; i < l) {
-        x[i] = render(cases[i]);
-      }
-      console.log("done");
-      """
-    def bench_snuownd(cases_json):
-        snuownd = Popen([
-            "node", "-e",
-            "var render = require('./snuownd/snuownd.js').getParser().render;" +
-            boiler_bench
-        ], stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        out, err = snuownd.communicate(cases_json)
-        assert out == "done\n"
-        assert err == ""
+    # Benchmark a single comment
+    def bench_comment(renderer, case, number=500):
+        x = None
+        for i in range(0, number):
+            x = renderwith(renderer, case)
 
-    def bench_emsnudown(cases_json):
-        emsnudown = Popen([
-            "node", "-e",
-            "var render = require('../build/emsd.opt.js').render;" +
-            boiler_bench
-        ], stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        out, err = emsnudown.communicate(cases_json)
-        assert out == "done\n"
-        assert err == ""
+    nodeinit = """
+        var rndr;
+        process.stdin.resume();
+        process.stdin.setEncoding('utf8');
+        process.stdin.on('data', function (d) {
+          var num = parseInt(d);
+          var txt = 'done';
+          for (var i = 0; i < num; i++) { init(); }
+          var pre = ('        ' + Buffer.byteLength(txt, 'utf8')).slice(-8);
+          process.stdout.write(pre + txt);
+        });
+        """
+    nodeinits = {
+          "emsnudown": """
+            function init () {
+                rndr = require('../build/emsd.opt.js').snudown.render;
+            }""" + nodeinit,
+          "snuownd": """
+            function init () {
+                rndr = require('./snuownd/snuownd.js').getParser().render;
+            }""" + nodeinit
+        }
+    def bench_init(renderer, num):
+        nodesend(renderer, str(num))
+        assert nodereceive(renderer) == "done"
 
-    benches = [
-        { "desc": "Initialisation speed",     "data": [],            "num": 100 },
-        { "desc": "Medium number of renders", "data": cases[:600],   "num": 70  },
-        { "desc": "Large number of renders",  "data": cases[:30000], "num": 20  }
-    ]
-    print("RUNNING")
-    for bench in benches:
-        print(bench["desc"])
-        json_data = json.dumps(bench["data"])
-        print("SnuOwnd " + str(timeit.timeit(
-            lambda: bench_snuownd(json_data), number=bench["num"])))
-        print("EmSnudown " + str(timeit.timeit(
-            lambda: bench_emsnudown(json_data), number=bench["num"])))
+    def format_results(results, iterations):
+        results = { k: float(v) for k, v in results.items() }
+        result_str = ""
+        if "snudown" in results:
+            result_str += " - Snudown   " + str(results["snudown"])[:8]
+            result_str += " - " + str(results["snudown"]/iterations) + "\n"
+        result_str += " - EmSnudown " + str(results["emsnudown"])[:8]
+        result_str += " - " + str(results["emsnudown"]/iterations) + "\n"
+        result_str += " - SnuOwnd   " + str(results["snuownd"])[:8]
+        result_str += " - " + str(results["snuownd"]/iterations) + "\n"
+        return result_str
+
+
+    def initialisation_benchmark(num=200000):
+        print("= Initialisation =")
+        print(str(num) + " iterations")
+
+        results = dict()
+        inittest = preprenderers(nodeinits)
+        print("Performing benchmark")
+        try:
+            results["emsnudown"] = timeit.timeit(
+                lambda: bench_init(inittest["emsnudown"], num), number=1)
+            results["snuownd"] = timeit.timeit(
+                lambda: bench_init(inittest["snuownd"], num), number=1)
+            print(format_results(results, num))
+        finally:
+            killrenderers(inittest.values())
+
+    def real_comments_benchmark(num=100000):
+        print("= Real comments =")
+
+        filename = "commentdata/2013-06-27_HOUR-21"
+        num_lines = sum(1 for line in open(filename))
+        if num_lines < num:
+            print("Warning: unable to find " + str(num) + " testcases,")
+            print("         using " + str(num_lines) + " instead")
+            num = num_lines
+        print(str(num) + " iterations")
+        cases = []
+
+        print("Preparing comment test cases")
+        with open(filename) as f:
+            for i, line in enumerate(f.readlines()):
+                if (i > num): break
+                cases.append(json.loads(line)["body"])
+
+        print("Performing benchmark")
+        results = dict()
+        results["snudown"] = timeit.timeit(
+            lambda: bench_comments(snudown, cases), number=1)
+        results["snuownd"] = timeit.timeit(
+            lambda: bench_comments(snuownd, cases), number=1)
+        results["emsnudown"] = timeit.timeit(
+            lambda: bench_comments(emsnudown, cases), number=1)
+        print(format_results(results, num))
+
+    def custom_comments_benchmark(num=50000):
+        print("= Custom cases =")
+        print(str(num) + " iterations")
+
+        custom_cases = [
+            { "desc": "Short comment", "data": "hi" },
+            { "desc": "Basic comment",
+                "data": "This is a short comment\n\nAnd another line." },
+            # 160 chars for the two below, joined 20 times = 3200 + 38
+            { "desc": "Long comment", "data": "\n\n".join(
+                [("\n\n".join(["aword qwer" for i in range(0, 16)]))
+                  for i in range(0,20)]) },
+            { "desc": "Complex comment", "data": "\n\n".join(
+                [("*A* **more** __com_plex__ `comment`\n\n" +
+                  " - abc\n - bcd\n - cde\n\n```\ncodeline" +
+                  "\ncode_line\n```\n\n1. nu\n2. mb\n3. er\n\n" +
+                  "[and now](http://forsome.thing/completely /r/different")
+                  for i in range(0,20)]) }
+        ]
+
+        results = dict()
+        print("Performing benchmark")
+        for case in custom_cases:
+            print(case["desc"])
+            results["snudown"] = timeit.timeit(
+                lambda: bench_comment(snudown,   case["data"], num), number=1)
+            results["emsnudown"] = timeit.timeit(
+                lambda: bench_comment(emsnudown, case["data"], num), number=1)
+            results["snuownd"] = timeit.timeit(
+                lambda: bench_comment(snuownd,   case["data"], num), number=1)
+            print(format_results(results, num))
+
+    benches = {
+        "initialisation": initialisation_benchmark,
+        "real_comments": real_comments_benchmark,
+        "custom_comments": custom_comments_benchmark
+    }
+    error = False
+    to_bench = dict()
+    if requested_benches is None:
+        error = True
+    else:
+        for bench in requested_benches:
+            bench = bench.split("=")
+            if bench[0] not in benches:
+                error = True
+                print("Unrecognised bench - " + bench[0])
+            elif len(bench) > 2 or (len(bench) == 2 and not bench[1].isdigit()):
+                error = True
+                print("Invalid arguments for bench")
+            else:
+                num = int((len(bench) == 2 and bench[1])) or None
+                to_bench[bench[0]] = num
+    if error:
+        print("Need to specify a combination of valid benches")
+        print("Try one or more of " + ", ".join(benches.keys()))
+        print("You may choose the number of iterations with 'bench=1234'")
+    else:
+
+        print("=== Preparing ===")
+        if "real_comments" in to_bench or "custom_comments" in to_bench:
+            print("Warming up renderers")
+            devnull = open(os.devnull, 'w')
+            tmpstdout = sys.stdout
+            sys.stdout = devnull
+            real_comments_benchmark(5000)
+            sys.stdout = tmpstdout
+            devnull.close()
+
+        print("")
+        print("=== Benchmarking ===")
+        for bench, num in to_bench.items():
+            if num is None:
+                benches[bench]()
+            else:
+                benches[bench](num)
+    return
 
 # ============
 # Execute tests if called from command line
@@ -261,7 +380,17 @@ if __name__ == '__main__':
         "comments": comments_test,
         "benchmark": benchmark_test
     }
-    if len(sys.argv) == 2 and sys.argv[1] in options:
+    if len(sys.argv) > 2 and sys.argv[1] == "benchmark":
+        try:
+            renderers = preprenderers()
+            emsnudown = renderers["emsnudown"]
+            snuownd = renderers["snuownd"]
+            options["benchmark"](sys.argv[2:])
+        except:
+            print(traceback.format_exc())
+        finally:
+            killrenderers([emsnudown, snuownd])
+    elif len(sys.argv) == 2 and sys.argv[1] in options:
         try:
             renderers = preprenderers()
             emsnudown = renderers["emsnudown"]
@@ -275,6 +404,6 @@ if __name__ == '__main__':
         if (len(sys.argv) == 2):
             print("Operation not recognised")
         else:
-            print("Need to specify an operation")
+            print("No operation specified or unrecognised arguments")
         print("Try one of " + ", ".join(options.keys()))
 
