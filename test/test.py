@@ -4,9 +4,6 @@
 
 from __future__ import print_function
 
-import sys
-sys.path.append("../snudown/build/lib.linux-i686-2.7")
-
 # ============
 # Functions needed from reddit to load comment JSON
 # ============
@@ -29,6 +26,7 @@ def _force_utf8(text):
     return str(_force_unicode(text).encode('utf8'))
 
 import tempfile
+import sys
 import json
 from subprocess import PIPE, Popen
 
@@ -48,26 +46,34 @@ noderender = """
     """
 
 snudown = emsnudown = snuownd = None
+sys.path.append("../snudown/build/lib.linux-i686-2.7")
+import snudown
 
-def preprenderers():
-    global snudown
-    global emsnudown
-    global snuownd
+def preprenderers(body=noderender, return_renderers=False):
+    if not return_renderers:
+        global emsnudown
+        global snuownd
 
-    import snudown
     emsnudown = Popen(["node", "-e",
         "var rndr = require('../build/emsd.opt.js').snudown.render;" +
-        noderender
+        body
         ], stdin=PIPE, stdout=PIPE, stderr=PIPE)
     snuownd = Popen(["node", "-e",
         "var prsr = require('./snuownd/snuownd.js').getParser();" +
         "var rndr = function (t) { return prsr.render(t); };" +
-        noderender
+        body
         ], stdin=PIPE, stdout=PIPE, stderr=PIPE)
 
-def killrenderers():
-    emsnudown.kill()
-    snuownd.kill()
+    if return_renderers:
+        return { "emsnudown": emsnudown, "snuownd": snuownd }
+
+def killrenderers(renderers):
+    if renderers is None:
+        emsnudown.kill()
+        snuownd.kill()
+    else:
+        for renderer in renderers:
+             renderer.kill()
 
 def renderwith(renderer, body):
     body_utf8 = _force_utf8(body)
