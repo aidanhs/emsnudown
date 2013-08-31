@@ -1,5 +1,6 @@
 {
     "snudown_sanity-minus_subreddit": "/r/all-minus-something",
+    "snudown_sanity-anchor_href": "[Test](#test)",
     "unicode_in_link-t3_1h7d00": "[link](http://www.a.com/rşt)",
     "byte_in_link-t3_1h6t08": "[link](http://www.a.com/xyz‎)",
     "zalgo_text-t1_carivfh": " ͪͨD̑̍i̐ͣs͊͐ċͩoͩ̇rͩ͌d͗́.̐͆\t̔́H̓̋e͆̐ ̏́ẇ͗ȟ̇o͒͒ ͋ͫ",
