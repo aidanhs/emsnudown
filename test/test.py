@@ -156,7 +156,7 @@ def differing_test():
 
     print("FAIL: " + str(fail))
     print("SUCCESS: " + str(success))
-    if success > 1:
+    if success > 0:
         print("SUCCESSES IN DIFFERING TESTS")
 
 # ============
