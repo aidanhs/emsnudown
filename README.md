@@ -15,7 +15,9 @@ Set up Emscripten as per
 the point where node runs the hello world program.
 
 The makefile expects emcc to be accessible at `../emcc`, so edit the makefile or
-make this the case.
+make this the case. Tests have been performed with *commit 1cc28b8e9e9* of
+emscripten - while the emscripten project asserts that main is always stable,
+that doesn't guarantee there will be no breaking changes.
 
 Run `make`.
 
@@ -40,6 +42,22 @@ snudown.render(
 
 See snudown documentation for information on optional arguments.
 
+Run the tests
+-------------
+
+Emsnudown comes with an extensive test suite. To run it you must be in the
+`test` directory and run `python test.py`. Available suites are:
+ - `sanity` - directly uses the snudown test suite
+ - `comments` - uses a set of real comments from reddit from the `commentdata`
+   directory. Failures are logged to `comments.test.log` so you can inspect them.
+ - `differing` - a manually curated set of minimal failing comments
+   (see the `differing.test` file)
+ - `benchmark` - for benchmarking snudown implementations. It provides:
+   - `initialisation` - to see how fast the implementations are to start
+   - `real_comments` - a set of real comments, as per the `comments` test
+   - `custom_comments` - a manually created set of comments for testing the
+     implementations in different scenarios
+
 Build information
 -----------------
 
@@ -51,7 +69,7 @@ something is broken, it's possibly worth checking if it's an optimisation by
 running with the non-optimised version.
 
 `emsd.chk.*` files have additional checks and assertions enabled and should
-be useful for debugging.
+be useful for debugging (maybe).
 
 emsd.* (i.e. not chk or opt) are produced by the default emscripten options.
 
@@ -66,5 +84,4 @@ Plans
 -----
 
  - A fuzzer tester would be cool.
- - Better benchmarking.
  - Test page (+ in browser benchmarking).
