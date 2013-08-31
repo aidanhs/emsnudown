@@ -44,30 +44,34 @@ noderender = """
       process.stdout.write(pre + txt);
     });
     """
+noderenderers = {
+      "emsnudown":
+        "var rndr = require('../build/emsd.opt.js').snudown.render;"
+        + noderender,
+      "snuownd":
+        "var prsr = require('./snuownd/snuownd.js').getParser();" +
+        "var rndr = function (t) { return prsr.render(t); };" +
+        noderender
+    }
 
 snudown = emsnudown = snuownd = None
 sys.path.append("../snudown/build/lib.linux-i686-2.7")
 import snudown
 
-def preprenderers(body=noderender, return_renderers=False):
+def preprenderers(src=noderenderers, return_renderers=False):
     if not return_renderers:
         global emsnudown
         global snuownd
 
-    emsnudown = Popen(["node", "-e",
-        "var rndr = require('../build/emsd.opt.js').snudown.render;" +
-        body
+    emsnudown = Popen(["node", "-e", src["emsnudown"]
         ], stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    snuownd = Popen(["node", "-e",
-        "var prsr = require('./snuownd/snuownd.js').getParser();" +
-        "var rndr = function (t) { return prsr.render(t); };" +
-        body
+    snuownd = Popen(["node", "-e", src["snuownd"]
         ], stdin=PIPE, stdout=PIPE, stderr=PIPE)
 
     if return_renderers:
         return { "emsnudown": emsnudown, "snuownd": snuownd }
 
-def killrenderers(renderers):
+def killrenderers(renderers=None):
     if renderers is None:
         emsnudown.kill()
         snuownd.kill()
