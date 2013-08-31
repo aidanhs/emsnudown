@@ -193,6 +193,7 @@ def comments_test():
 # ============
 # Benchmark tests
 # ============
+# TODO: restore the 'batched' test from commit 0a664c4?
 import timeit
 def benchmark_test(requested_benches=None):
     print("BENCHMARK\n")
