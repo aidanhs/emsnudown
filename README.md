@@ -16,8 +16,8 @@ the point where node runs the hello world program.
 
 The makefile expects emcc to be accessible at `../emcc`, so edit the makefile or
 make this the case. Tests have been performed with *commit 1cc28b8e9e9* of
-emscripten - while the emscripten project asserts that main is always stable,
-that doesn't guarantee there will be no breaking changes.
+kripken/emscripten - while the emscripten project asserts that main is always
+stable, that doesn't guarantee there will be no breaking changes.
 
 Run `make`.
 
@@ -71,7 +71,7 @@ running with the non-optimised version.
 `emsd.chk.*` files have additional checks and assertions enabled and should
 be useful for debugging (maybe).
 
-emsd.* (i.e. not chk or opt) are produced by the default emscripten options.
+`emsd.*` (i.e. not chk or opt) are produced by the default emscripten options.
 
 `*.js` files are the core of the EmSnudown offer. In particular, you probably
 want emsd.opt.js if you want to use EmSnudown in a project.
