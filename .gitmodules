@@ -4,3 +4,6 @@
 [submodule "test/snuownd"]
 	path = test/snuownd
 	url = https://github.com/gamefreak/snuownd.git
+[submodule "test/emsnudown_tests"]
+	path = test/emsnudown_tests
+	url = https://github.com/aidanhs/emsnudown_tests.git

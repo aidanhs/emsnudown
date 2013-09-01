@@ -1,5 +1,3 @@
-# Get data for this from
-# http://www.reddit.com/r/redditdev/comments/1h1wqu/anonymous_ftp_access_for_reddit_comment_data_is/
 # Need to build the snudown module
 
 from __future__ import print_function
@@ -167,7 +165,7 @@ def comments_test():
     fail = 0
     success = 0
     skip = 0
-    filename = "commentdata/2013-06-27_HOUR-21"
+    filename = "emsnudown_tests/2013-06-27_HOUR-21"
     log = open("comments.test.log", "w")
     with open(filename) as f:
         for i, line in enumerate(f.readlines()):
@@ -268,7 +266,7 @@ def benchmark_test(requested_benches=None):
     def real_comments_benchmark(num=100000):
         print("= Real comments =")
 
-        filename = "commentdata/2013-06-27_HOUR-21"
+        filename = "emsnudown_tests/2013-06-27_HOUR-21"
         num_lines = sum(1 for line in open(filename))
         if num_lines < num:
             print("Warning: unable to find " + str(num) + " testcases,")
