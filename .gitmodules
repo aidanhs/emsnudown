@@ -1,0 +1,6 @@
+[submodule "lib/emsnudown"]
+	path = lib/emsnudown
+	url = https://github.com/aidanhs/emsnudown.git
+[submodule "lib/snuownd"]
+	path = lib/snuownd
+	url = https://github.com/gamefreak/snuownd.git
