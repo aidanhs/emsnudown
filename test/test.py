@@ -48,7 +48,7 @@ noderender = """
     """
 noderenderers = {
       "emsnudown":
-        "var rndr = require('../build/emsd.opt.js').snudown.render;"
+        "var rndr = require('../build/emsd.opt.js').emsnudown.render;"
         + noderender,
       "snuownd":
         "var prsr = require('./snuownd/snuownd.js').getParser();" +
@@ -225,7 +225,7 @@ def benchmark_test(requested_benches=None):
     nodeinits = {
           "emsnudown": """
             function init () {
-                rndr = require('../build/emsd.opt.js').snudown.render;
+                rndr = require('../build/emsd.opt.js').emsnudown.render;
             }""" + nodeinit,
           "snuownd": """
             function init () {

@@ -1,4 +1,4 @@
-this['snudown'] = (function () {
+this['emsnudown'] = (function () {
 
   var root = {
     emscript: function () {
