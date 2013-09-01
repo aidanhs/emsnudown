@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="stylesheets/stylesheet.css" media="screen"/>
   <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
   <script type="text/javascript" src="javascripts/script.js"></script>
+  <script type="text/javascript" src="lib/emsd.opt.js"></script>
+  <script type="text/javascript" src="lib/snuownd.uglified.js"></script>
 
   <title>Emsnudown</title>
   <meta name="description" content="Snudown for the web via emscripten">
@@ -36,10 +38,99 @@
         </div>
         <article class="markdown-body">
           <h3>
-<a name="welcome-to-the-emsnudown-test-page" class="anchor" href="#welcome-to-the-emsnudown-test-page"><span class="octicon octicon-link"></span></a>EmSnudown Test Page</h3>
+            <a name="welcome-to-the-emsnudown-test-page" class="anchor" href="#welcome-to-the-emsnudown-test-page"><span class="octicon octicon-link"></span></a>EmSnudown Test Page</h3>
 
-<p>This is a simple test page for seeing the output of EmSnudown and SnuOwnd.
-Every keypress will trigger a rerender.</p>
+          <p>This is a simple test page for seeing the output of EmSnudown and SnuOwnd.
+          Every keypress will trigger a rerender.</p>
+
+          <style>
+            #md_output > div {
+              width: 50%;
+              display: inline-block;
+              margin-bottom: 1em;
+            }
+            #md_output .output {
+              border-width: 1px;
+              border-style: solid;
+              padding: 1em;
+            }
+
+            /* Undo meyerweb strangeness */
+            code { font-family: monospace; }
+
+            /* Some CSS definitions lifted from reddit */
+            /* markdown */
+            .md { max-width: 60em; overflow: auto; font-size: small; }
+            .md p, .md h1 { margin: 5px 0}
+            .md h1 { font-weight: normal; font-size: 100%; }
+            .md > * { margin-bottom: 0px }
+            .md strong { font-weight: bold; }
+            .md em { font-style: italic; }
+            .md strong em { font-style: italic; font-weight: bold }
+            .md img { display: none }
+            .md ol, .md ul { margin: 10px 2em; }
+            .md ul { list-style: disc outside }
+            .md ol {
+                list-style: decimal outside;
+                margin-left: 3em;
+            }
+            .md pre { margin: 10px; }
+            .md blockquote, .help blockquote {
+                border-left: 2px solid #369;
+                padding-left: 4px; 
+                margin: 5px;
+                margin-right: 15px;
+            }
+            .md td, .md th { border: 1px solid #EEE; padding: 1px 3px; }
+            .md th { font-weight: bold;  }
+            .md table { margin: 5px 10px;  }
+            .md center { text-align: left;  }
+          </style>
+
+          <div id="demoarea">
+            <textarea style="width: 100%; height: 170px;" id="md_input">*A* **more** __com_plex__ `comment`
+
+/r/all-minus-something  
+[Test](#test)  
+emsnudown is correct for both the above
+
+ - abc
+ - bcd
+ - cde
+
+gap ln
+
+    codeline
+    code_line
+
+1. nu
+2. mb
+3. er
+
+[and now](http://forsome.thing/completely) /r/different</textarea>
+            <div id="md_output">
+              <div id="emsnudown">
+                <p>EmSnudown</p>
+                <div class="output md"></div>
+              </div><!-- http://stackoverflow.com/q/6871996 :(
+           --><div id="snuownd">
+                <p>SnuOwnd</p>
+                <div class="output md"></div>
+              </div>
+            </div>
+            <script>
+              var prsr_snuownd = window.SnuOwnd.getParser();
+              var rndr_snuownd = function (txt) { return prsr_snuownd.render(txt) };
+              var rndr_emsnudown = window.emsnudown.render;
+              $('#md_input').on('change keydown paste input', function () {
+                var text = $('#md_input').val();
+                $('#snuownd > .output').html(rndr_snuownd(text));
+                $('#emsnudown > .output').html(rndr_emsnudown(text));
+              });
+              $('#md_input').trigger('change');
+            </script>
+          </div>
+
         </article>
       </div>
     </div>
