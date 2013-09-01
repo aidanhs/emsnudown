@@ -355,11 +355,17 @@ def benchmark_test(requested_benches=None):
         print("=== Preparing ===")
         if "real_comments" in to_bench or "custom_comments" in to_bench:
             print("Warming up renderers")
+
             devnull = open(os.devnull, 'w')
             tmpstdout = sys.stdout
-            sys.stdout = devnull
-            real_comments_benchmark(5000)
-            sys.stdout = tmpstdout
+            try:
+                sys.stdout = devnull
+                real_comments_benchmark(5000)
+            except:
+                sys.stdout = tmpstdout
+                print(traceback.format_exc())
+            finally:
+                sys.stdout = tmpstdout
             devnull.close()
 
         print("")
