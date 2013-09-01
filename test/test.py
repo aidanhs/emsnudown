@@ -307,8 +307,8 @@ def benchmark_test(requested_benches=None):
                   for i in range(0,20)]) },
             { "desc": "Complex comment", "data": "\n\n".join(
                 [("*A* **more** __com_plex__ `comment`\n\n" +
-                  " - abc\n - bcd\n - cde\n\n```\ncodeline" +
-                  "\ncodeline\n```\n\n1. nu\n2. mb\n3. er\n\n" +
+                  " - abc\n - bcd\n - cde\n\ngap ln\n\n    code" +
+                  "\n    cdln\n\n1. nu\n2. mb\n3. er\n\n" +
                   "[and now](http://forsome.thing/completely) /r/different")
                   for i in range(0,20)]) }
         ]
