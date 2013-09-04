@@ -25,6 +25,7 @@
       opts['renderer']      !== void 0 ? 1 : 0, opts['renderer'],
       opts['enable_toc']    !== void 0 ? 1 : 0, opts['enable_toc']);
   };
+  root['sanitise'] = root['Module']['cwrap']('sanitise', 'string', ['string']);
 
   return root;
 

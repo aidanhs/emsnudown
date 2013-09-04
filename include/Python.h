@@ -1,3 +1,7 @@
+
+#ifndef EMSNUDOWN_SHIM
+#define EMSNUDOWN_SHIM
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -111,6 +115,9 @@ static int PyArg_ParseTupleAndKeywords(PyObject *args, PyObject *kwargs, char *f
 void initsnudown(void);
 static PyObject *snudown_md(PyObject *self, PyObject *args, PyObject *kwargs);
 
+// Things from the sanitised we need to forward declate
+static void init_sanitiser(void);
+
 // EXPORTS
 
 // Initialisation call
@@ -120,6 +127,7 @@ int main(void) {
   outstring = bufnew(128);
   // Get snudown to initialise renderers etc
   initsnudown();
+  init_sanitiser();
   return 0;
 }
 
@@ -152,6 +160,136 @@ const char *render(
   return bufcstr(outstring);
 }
 
+/*
+ * HACKERY
+ */
 
+// Below here is a truly horrific level of hackery. Because snudown does not
+// expose the tools we need to make a custom renderer without performing source
+// modifications...we perform source modifications by including C files here
+// and throwing the custom renderer onto the end. Note the files listed below
+// must therefore NOT be passed to the compiler or we get duplicate symbols...
+// Unfortunately it therefore stomps on the good intention of having a thin
+// shim file that would 'just work' with significant snudown upgrades.
 
+#include "snudown.c"
+#include "html.c"
+#include "html_smartypants.c"
+#include "houdini_href_e.c"
+#include "houdini_html_e.c"
 
+/*
+ * ============
+ * Section specifically for RES, provides a HTML sanitiser
+ * ============
+ */
+static struct sd_markdown *sanitiser;
+static struct module_state sanit_state;
+static char* sanit_html_element_whitelist[] = {
+  "h1", "h2", "h3", "h4", "h5", "h6", "span", "div", "code",
+  "br", "hr", "p", "a", "img", "pre", "blockquote", "table",
+  "thead", "tbody", "tfoot", "tr", "th", "td", "strong", "em",
+  "i", "b", "u", "ul", "ol", "li", "dl", "dt", "dd",
+  "font", "center", "small", "s", "q", "sub", "sup", "del"
+};
+static char* sanit_html_attr_whitelist[] = {
+  "href", "title", "src", "alt", "colspan",
+  "rowspan", "cellspacing", "cellpadding", "scope",
+  "face", "color", "size", "bgcolor", "align"
+};
+static void sanit_rndr_paragraph(struct buf *ob, const struct buf *text, void *opaque) {
+  if (text->size != 0) { bufput(ob, text->data, text->size); }
+}
+// This function works like make_custom_renderer, but with tweaks and inlining
+// of called functions to tweak them as well
+static void init_sanitiser(void) {
+
+  // This bit is inlined and adapted from from sdhtml_renderer in html.c
+
+  static const struct sd_callbacks cb_default = {
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    sanit_rndr_paragraph,
+    NULL,
+    NULL,
+    NULL,
+
+    rndr_autolink,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    rndr_raw_html,
+    NULL,
+    NULL,
+    NULL,
+
+    NULL,
+    NULL,
+
+    NULL,
+    NULL,
+  };
+
+  struct html_renderopt *options   = (struct html_renderopt *)&sanit_state.options;
+  struct sd_callbacks   *callbacks = &sanit_state.callbacks;
+
+  /* Prepare the options pointer */
+  memset(options, 0x0, sizeof(struct html_renderopt));
+  options->flags = snudown_wiki_render_flags;
+
+  memcpy(callbacks, &cb_default, sizeof(struct sd_callbacks));
+
+  // Resuming make_custom_renderer
+
+  sanit_state.options.html.link_attributes = &snudown_link_attr;
+  sanit_state.options.html.html_element_whitelist = sanit_html_element_whitelist;
+  sanit_state.options.html.html_attr_whitelist = sanit_html_attr_whitelist;
+
+  sanitiser = sd_markdown_new(
+    snudown_default_md_flags,
+    16,
+    &sanit_state.callbacks,
+    &sanit_state.options
+  );
+
+}
+const char *sanitise(char *text) {
+
+  // Wipe the in and out string buffers
+  outstring->size = 0;
+  renderargs.text->size = 0;
+
+  bufputs(renderargs.text, text);
+
+  renderargs.arg_nofollow =      0;
+  renderargs.arg_target =        0;
+  renderargs.arg_toc_id_prefix = 0;
+  renderargs.arg_renderer =      0;
+  renderargs.arg_enable_toc =    0;
+
+  struct sd_markdown  *usertext;
+  struct module_state *usertext_state;
+  usertext       = sundown[RENDERER_USERTEXT].main_renderer;
+  usertext_state = sundown[RENDERER_USERTEXT].state;
+  sundown[RENDERER_USERTEXT].main_renderer = sanitiser;
+  sundown[RENDERER_USERTEXT].state         = &sanit_state;
+
+  snudown_md(&self, &args, &kwargs);
+
+  sundown[RENDERER_USERTEXT].main_renderer = usertext;
+  sundown[RENDERER_USERTEXT].state         = usertext_state;
+
+  // TODO: find out how this works, does it ever get deallocated? Is it even
+  // safe to do this?
+  return bufcstr(outstring);
+}
+
+#endif

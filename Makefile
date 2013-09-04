@@ -1,8 +1,8 @@
 PREFIX=emsd
-FILES=snudown/snudown.c snudown/src/*.c snudown/html/*.c
-INC=-Isnudown/html -Isnudown/src -Iinclude
+FILES=emsnudown.c snudown/src/*.c # snudown/html/*.c included in Python.h
+INC=-Isnudown -Isnudown/html -Isnudown/src -Iinclude
 EMCC=../emscripten/emcc
-EMFLAGS=-s EXPORTED_FUNCTIONS="['_main','_render']" --pre-js js/preJs.js --post-js js/postJs.js --js-library js/pylib.js
+EMFLAGS=-s EXPORTED_FUNCTIONS="['_main','_render','_sanitise']" --pre-js js/preJs.js --post-js js/postJs.js --js-library js/pylib.js
 # First general optimisation, then disable maths stuff,
 # then memory reduction, then advanced optimisation
 # TODO: chk: -s CHECK_SIGNS=1, opt: -s CORRECT_SIGNS=0
@@ -47,6 +47,6 @@ build/$(PREFIX).opt.js build/$(PREFIX).opt.html: $(FILES)
 	$(EMCC) $(FILES) $(INC) $(EMFLAGS) $(OPTFLAGS) -o $@
 
 # I don't think I should have to touch the file to make this work
-snudown/snudown.c: include/Python.h js/*.js
-	touch snudown/snudown.c
+emsnudown.c: include/Python.h js/*.js
+	touch emsnudown.c
 
